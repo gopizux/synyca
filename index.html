@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>synyca - Synonym & Meaning Generator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Google Fonts: Alexandria -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: "Alexandria", sans-serif;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @keyframes fade-in-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fade-in-up 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 min-h-screen flex flex-col items-center selection:bg-orange-200">
+
+    <!-- Header -->
+    <header class="w-full py-8 flex justify-center">
+        <h1 class="text-4xl font-bold tracking-tight text-orange-500 lowercase cursor-pointer" onclick="window.location.reload()">synyca</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="w-full max-w-4xl px-4 flex-grow flex flex-col items-center">
+        
+        <!-- Search Section -->
+        <div class="w-full max-w-xl mt-8 mb-12">
+            <div class="relative group">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Enter a word to find meaning & synonyms..." 
+                    class="w-full px-6 py-4 text-lg border-2 border-orange-200 rounded-full focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all duration-300 placeholder-gray-400 bg-white shadow-sm group-hover:shadow-md"
+                    autocomplete="off"
+                >
+                <button 
+                    id="searchBtn"
+                    class="absolute right-2 top-2 bottom-2 bg-orange-500 hover:bg-orange-600 text-white px-6 rounded-full font-medium transition-colors duration-300 flex items-center justify-center"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                </button>
+            </div>
+            <p class="text-center text-sm text-gray-400 mt-4">Try words like: <span class="text-orange-400 cursor-pointer hover:underline suggestion">serendipity</span>, <span class="text-orange-400 cursor-pointer hover:underline suggestion">ephemeral</span>, <span class="text-orange-400 cursor-pointer hover:underline suggestion">luminous</span></p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsContainer" class="w-full hidden animate-fade-in-up">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-6 border-b border-orange-100 pb-2">
+                <h2 class="text-3xl font-semibold text-gray-700">
+                    <span id="searchedWord" class="text-orange-500 lowercase"></span>
+                </h2>
+                <span id="countBadge" class="bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1 rounded-full mb-1 md:mb-0">0 synonyms found</span>
+            </div>
+
+            <!-- Definition Section -->
+            <div id="definitionContainer" class="mb-10 hidden bg-orange-50/30 rounded-xl p-6 border border-orange-100">
+                <div class="flex flex-wrap items-center gap-3 mb-2">
+                    <span id="partOfSpeech" class="text-xs font-bold uppercase tracking-wider text-orange-400 bg-white px-2 py-1 rounded border border-orange-100">noun</span>
+                    <span id="phonetic" class="text-sm font-mono text-gray-400"></span>
+                </div>
+                <p id="definitionText" class="text-gray-700 text-lg leading-relaxed font-light"></p>
+                <div id="exampleContainer" class="mt-3 hidden">
+                    <p id="exampleText" class="text-gray-500 italic border-l-2 border-orange-300 pl-3"></p>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loader" class="hidden py-12 flex justify-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorMsg" class="hidden py-8 text-center text-red-400 bg-red-50 rounded-lg border border-red-100 mb-8">
+                <p>Oops! Something went wrong. Please try again.</p>
+            </div>
+
+            <!-- Synonyms Grid -->
+            <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-4">Synonyms</h3>
+            <div id="synonymsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-20">
+                <!-- Items will be injected here via JS -->
+            </div>
+            <div id="noSynonymsMsg" class="hidden text-gray-400 italic mb-20">No synonyms found for this word.</div>
+        </div>
+
+        <!-- Empty State / Placeholder -->
+        <div id="emptyState" class="flex flex-col items-center justify-center text-gray-300 mt-10">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-24 h-24 mb-4 opacity-20">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+            </svg>
+            <p class="text-lg font-light">Enter a word above to discover meanings and synonyms.</p>
+        </div>
+
+    </main>
+
+    <footer class="w-full py-6 text-center text-gray-400 text-sm border-t border-orange-50 mt-auto">
+        <p>&copy; 2023 synyca. Minimal synonym & definition tool.</p>
+    </footer>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const synonymsGrid = document.getElementById('synonymsGrid');
+        const searchedWordSpan = document.getElementById('searchedWord');
+        const emptyState = document.getElementById('emptyState');
+        const loader = document.getElementById('loader');
+        const errorMsg = document.getElementById('errorMsg');
+        const countBadge = document.getElementById('countBadge');
+        const suggestions = document.querySelectorAll('.suggestion');
+        
+        // Definition Elements
+        const definitionContainer = document.getElementById('definitionContainer');
+        const partOfSpeechSpan = document.getElementById('partOfSpeech');
+        const phoneticSpan = document.getElementById('phonetic');
+        const definitionText = document.getElementById('definitionText');
+        const exampleContainer = document.getElementById('exampleContainer');
+        const exampleText = document.getElementById('exampleText');
+        const noSynonymsMsg = document.getElementById('noSynonymsMsg');
+
+        // Main Search Function
+        async function fetchWordData(word) {
+            if (!word.trim()) return;
+
+            // UI Reset
+            emptyState.classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+            synonymsGrid.innerHTML = '';
+            definitionContainer.classList.add('hidden');
+            noSynonymsMsg.classList.add('hidden');
+            errorMsg.classList.add('hidden');
+            loader.classList.remove('hidden');
+            searchedWordSpan.textContent = word;
+            countBadge.textContent = 'Searching...';
+
+            // Clean word for API
+            const cleanWord = word.trim().toLowerCase();
+
+            try {
+                // Fetch Data in Parallel: Dictionary API for meaning, Datamuse for synonyms
+                const [dictResponse, synResponse] = await Promise.allSettled([
+                    fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`),
+                    fetch(`https://api.datamuse.com/words?rel_syn=${cleanWord}&max=100`)
+                ]);
+
+                loader.classList.add('hidden');
+
+                let definitionFound = false;
+                let synonymsFound = false;
+
+                // Process Definition
+                if (dictResponse.status === 'fulfilled' && dictResponse.value.ok) {
+                    const data = await dictResponse.value.json();
+                    if (data && data.length > 0) {
+                        renderDefinition(data[0]);
+                        definitionFound = true;
+                    }
+                }
+
+                // Process Synonyms
+                if (synResponse.status === 'fulfilled' && synResponse.value.ok) {
+                    const data = await synResponse.value.json();
+                    if (data && data.length > 0) {
+                        renderSynonyms(data);
+                        synonymsFound = true;
+                        countBadge.textContent = `${data.length} synonyms found`;
+                    } else {
+                        countBadge.textContent = `0 synonyms found`;
+                        noSynonymsMsg.classList.remove('hidden');
+                    }
+                }
+
+                // Error Handling if absolutely nothing found
+                if (!definitionFound && !synonymsFound) {
+                    errorMsg.classList.remove('hidden');
+                    errorMsg.querySelector('p').textContent = `No results found for "${word}".`;
+                    resultsContainer.classList.add('hidden');
+                    emptyState.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                loader.classList.add('hidden');
+                errorMsg.classList.remove('hidden');
+                errorMsg.querySelector('p').textContent = 'Network error. Please try again.';
+            }
+        }
+
+        function renderDefinition(entry) {
+            definitionContainer.classList.remove('hidden');
+            
+            // Phonetic
+            const phonetic = entry.phonetic || (entry.phonetics && entry.phonetics.find(p => p.text)?.text) || '';
+            phoneticSpan.textContent = phonetic;
+
+            // Use the first meaning found
+            const meaning = entry.meanings[0];
+            if (meaning) {
+                partOfSpeechSpan.textContent = meaning.partOfSpeech;
+                
+                // Definition
+                const def = meaning.definitions[0];
+                if (def) {
+                    definitionText.textContent = def.definition;
+                    
+                    // Example
+                    if (def.example) {
+                        exampleContainer.classList.remove('hidden');
+                        exampleText.textContent = `"${def.example}"`;
+                    } else {
+                        exampleContainer.classList.add('hidden');
+                    }
+                }
+            }
+        }
+
+        function renderSynonyms(data) {
+            data.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = `
+                    bg-orange-50/50 hover:bg-orange-500 hover:text-white 
+                    border border-orange-100 hover:border-orange-500
+                    rounded-lg p-4 text-center cursor-pointer 
+                    transition-all duration-200 
+                    transform hover:-translate-y-1 hover:shadow-lg
+                    flex items-center justify-center h-full
+                `;
+                // Stagger animation delay
+                card.style.animationDelay = `${Math.min(index * 30, 1000)}ms`;
+                card.classList.add('animate-fade-in-up');
+                
+                const text = document.createElement('span');
+                text.className = 'font-medium text-lg break-words w-full';
+                text.textContent = item.word;
+                
+                card.appendChild(text);
+                
+                // Allow clicking a synonym to search for IT
+                card.addEventListener('click', () => {
+                    searchInput.value = item.word;
+                    fetchWordData(item.word);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+
+                synonymsGrid.appendChild(card);
+            });
+        }
+
+        // Event Listeners
+        searchBtn.addEventListener('click', () => {
+            fetchWordData(searchInput.value);
+        });
+
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                fetchWordData(searchInput.value);
+            }
+        });
+
+        // Click on suggestion words
+        suggestions.forEach(suggestion => {
+            suggestion.addEventListener('click', (e) => {
+                const word = e.target.textContent;
+                searchInput.value = word;
+                fetchWordData(word);
+            });
+        });
+
+    </script>
+</body>
+</html>
