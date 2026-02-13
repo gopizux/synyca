@@ -28,5 +28,5 @@ It allows users to instantly discover **definitions, phonetics, examples, and sy
 ---
 
 
-### Dictionary API
-Provides definitions, phonetics, part of speech, and examples  
+### Available Here
+[Synyca](https://gopizux.github.io/synyca/)
